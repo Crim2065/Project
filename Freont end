@@ -1,0 +1,448 @@
+<div id="outPopUp" class="">
+  <div class="">
+
+      <!--to show error alert-->
+      <div *ngIf="errormsg" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>{{errormsg}}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+
+        <!--to show success alert-->
+        <div *ngIf="successmsg" class="alert alert-success alert-dismissible fade show" role="alert">
+          <strong>{{successmsg}}</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <br><br>
+        <div align="center">
+          <img  src="/assets/addstudent.png" style="height: 100px;">
+    <br><br>
+      <form  [formGroup]="studentForm" >
+        <div  class="col-lg-4 mx-auto" >
+          <input type="text" class="form-control" formControlName="studentID" placeholder="Student ID">
+        </div>
+        <br>
+        <div class="col-lg-4 mx-auto">
+          <input type="text" class="form-control" formControlName="studentName" placeholder="Student Name">
+        </div>
+        <br>
+        <div class="col-lg-4 mx-auto">
+          <input type="text" class="form-control"  formControlName="studentEmail" placeholder="Student Email">
+        </div>
+        <br>
+        <div class="col-lg-4 mx-auto">
+          <input type="text" class="form-control"  formControlName="studentPhone" placeholder="Student Phone Number">
+        </div>
+        <br>
+        <div class="col-lg-4 mx-auto">
+          <input type="text" class="form-control"  formControlName="studentIntake" placeholder="Student Intake">
+        </div>
+        <br>
+        <div align="center" class="col-lg-15 mt-2" *ngIf="!getparamid" (click)="studentSubmit()">
+    <button>Add Student</button>
+        </div>
+
+
+
+
+      </form>
+
+    </div>
+  </div>
+
+8) Copy this into code addstudent.component.spec.ts
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { AddstudentComponent } from './addstudent.component';
+
+describe('AddstudentComponent', () => {
+  let component: AddstudentComponent;
+  let fixture: ComponentFixture<AddstudentComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ AddstudentComponent ]
+    })
+    .compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(AddstudentComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+9) copy this code into addstudent.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import {FormControl, FormGroup, Validators} from '@angular/forms';
+import {ApiserviceService} from '../apiservice.service';
+import { ActivatedRoute} from '@angular/router';
+
+@Component({
+  selector: 'app-addstudent',
+  templateUrl: './addstudent.component.html',
+  styleUrls: ['./addstudent.component.css']
+})
+export class AddstudentComponent implements OnInit {
+
+  constructor(private service:ApiserviceService,  private router:ActivatedRoute) { }
+
+  errormsg:any;
+  successmsg:any;
+  getparamid:any;
+
+  ngOnInit(): void {
+    //id for update
+    this.getparamid = this.router.snapshot.paramMap.get('id');
+    if (this.getparamid){
+    this.service.getOnestudent(this.getparamid).subscribe((res)=>{
+
+      console.log(res,'res==>');
+      this.studentForm.patchValue({
+        studentID:res.data[0].studentID,
+        studentName:res.data[0].studentName,
+        studentEmail:res.data[0].studentEmail,
+        studentPhone:res.data[0].studentPhone,
+        studentIntake:res.data[0].studentIntake,
+
+      });
+    });
+  }
+  }
+
+  studentForm = new FormGroup({
+    'studentID':new FormControl('',Validators.required),
+    'studentName':new FormControl('',Validators.required),
+    'studentEmail':new FormControl('',Validators.required),
+    'studentPhone':new FormControl('',Validators.required),
+    'studentIntake':new FormControl('',Validators.required)
+
+
+  });
+
+  //to create a new student
+  studentSubmit(){
+    if(this.studentForm.valid){
+      console.log(this.studentForm.value);
+      this.service.createstudent( this.studentForm.value ).subscribe((res)=>{
+        console.log(res,'res==>');
+        this.studentForm.reset();
+        this.successmsg = 'Add Student Profile Successful';
+      });
+
+    }
+    else{
+      this.errormsg = 'Add Student Profile Unsuccessful';
+    }
+
+  }
+//to update a student
+studentUpdate()
+{
+  console.log(this.studentForm.value,'updatedform');
+
+  if(this.studentForm.valid)
+  {
+    this.service.updatestudent(this.studentForm.value,this.getparamid).subscribe((res)=>{
+      console.log(res,'resupdated');
+      this.successmsg = res.message;
+
+    })
+  }
+  else
+  {
+    this.errormsg = 'invalid';
+  }
+}
+}
+
+10) copy this code into viewstudent.component.html
+
+<div class="container">
+
+
+  <!--showmessage alert for delete-->
+  <div *ngIf="successmsg" class="alert alert-success alert-dismissible fade show" role="alert">
+    <strong>{{successmsg}}</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <br><br>
+  <div align="center">
+    <img  src="/assets/addstudent.png" style="height: 100px;">
+<br><br>
+  <table class="table">
+    <thead>
+      <tr>
+        <td align= "center" scope="col">NO.</td>
+        <td align= "center" scope="col">STUDENT ID</td>
+        <td align= "center" scope="col">STUDENT NAME</td>
+        <td align= "center" scope="col">STUDENT EMAIL</td>
+        <td align= "center" scope="col">STUDENT PHONE NUMBER</td>
+        <td align= "center" scope="col">STUDENT INTAKE</td>
+
+        <td scope="col"></td>
+        <td scope="col"></td>
+
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor = 'let us of listData'>
+        <td align= "center"scope="row">{{us.id}}</td>
+        <td align= "center">{{us.studentID}}</td>
+        <td align= "center">{{us.studentName}}</td>
+        <td align= "center">{{us.studentEmail}}</td>
+        <td align= "center">{{us.studentPhone}}</td>
+        <td align= "center">{{us.studentIntake}}</td>
+
+        <td></td>
+        <td>
+
+          <button  (click)="deleteId(us.id)">REMOVE</button>
+          &nbsp;
+          <button [routerLink]="['/updatestudent', us.id]">EDIT🧑‍🎓</button>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+</div>
+
+11) copy this code into viewstudent.component.spec.ts
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { ViewstudentComponent } from './viewstudent.component';
+
+describe('ViewstudentComponent', () => {
+  let component: ViewstudentComponent;
+  let fixture: ComponentFixture<ViewstudentComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ ViewstudentComponent ]
+    })
+    .compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(ViewstudentComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+12) Copy this code into viewstudent.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import {ApiserviceService}from '../apiservice.service';
+
+@Component({
+  selector: 'app-viewstudent',
+  templateUrl: './viewstudent.component.html',
+  styleUrls: ['./viewstudent.component.css']
+})
+export class ViewstudentComponent implements OnInit {
+
+  constructor(private service:ApiserviceService) { }
+
+
+  listData:any;
+  successmsg:any;
+
+
+ngOnInit(): void {
+  this.getAllstudent();
+
+
+  }
+
+  //get delete id
+  deleteId(id:any){
+    console.log(id,'deleteid==>');
+    this.service.deletestudent(id).subscribe((res)=>{
+      console.log(res,'deleteres==>');
+      this.successmsg = "Delete student profile successful!";
+      this.getAllstudent();
+
+    });
+
+  }
+
+  //get student
+  getAllstudent(){
+
+    this.service.getAllstudent().subscribe((res)=>{
+      console.log(res,"res==>");
+
+      this.listData = res.data;
+    });
+
+  }
+
+}
+
+13) Copy code below into updatestudent.component.html
+<div id="outPopUp" class="">
+  <div class="">
+
+      <!--to show error alert-->
+      <div *ngIf="errormsg" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>{{errormsg}}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+
+        <!--to show success alert-->
+        <div *ngIf="successmsg" class="alert alert-success alert-dismissible fade show" role="alert">
+          <strong>{{successmsg}}</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+<br><br>
+        <div align="center">
+          <img  src="/assets/addstudent.png" style="height: 100px;">
+          <br><br>
+      <form  [formGroup]="studentForm" >
+        <div class="col-lg-4 mx-auto" >
+          <input type="text" class="form-control" formControlName="studentID" placeholder="Student ID">
+        </div>
+        <br>
+        <div class="col-lg-4 mx-auto">
+          <input type="text" class="form-control" formControlName="studentName" placeholder="Student Name">
+        </div>
+        <br>
+        <div class="col-lg-4 mx-auto">
+          <input type="text" class="form-control"  formControlName="studentEmail" placeholder="Student Email">
+        </div>
+        <br>
+        <div class="col-lg-4 mx-auto">
+          <input type="text" class="form-control"  formControlName="studentPhone" placeholder="Student Phone Number">
+        </div>
+        <br>
+        <div class="col-lg-4 mx-auto">
+          <input type="text" class="form-control"  formControlName="studentIntake" placeholder="Student Intake">
+        </div>
+        <br>
+
+        <div  align="center" class="col-lg-15 mt-2" *ngIf="!getparamid" (click)="studentUpdate()">
+          <button >Confirm Update🧑‍🎓</button>
+      </div>
+
+      </form>
+
+    </div>
+  </div>
+
+14) Copy code below into updatestudent.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { UpdatestudentComponent } from './updatestudent.component';
+
+describe('UpdatestudentComponent', () => {
+  let component: UpdatestudentComponent;
+  let fixture: ComponentFixture<UpdatestudentComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ UpdatestudentComponent ]
+    })
+    .compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(UpdatestudentComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+15) Copy code below into updatestudent.component.ts
+import { Component, OnInit} from '@angular/core';
+import {FormControl, FormGroup, Validators} from '@angular/forms';
+import {ApiserviceService} from '../apiservice.service';
+import { ActivatedRoute} from '@angular/router';
+
+@Component({
+  selector: 'app-updatestudent',
+  templateUrl: './updatestudent.component.html',
+  styleUrls: ['./updatestudent.component.css']
+})
+
+export class UpdatestudentComponent implements OnInit {
+
+  studentForm = new FormGroup({
+    'studentID':new FormControl('',Validators.required),
+    'studentName':new FormControl('',Validators.required),
+    'studentEmail':new FormControl('',Validators.required),
+    'studentPhone':new FormControl('',Validators.required),
+    'studentIntake':new FormControl('',Validators.required)
+
+
+  });
+
+  constructor(private service:ApiserviceService,  private router:ActivatedRoute) { }
+
+  errormsg:any;
+  successmsg:any;
+  getparamid:any;
+  message: boolean= false;
+
+  ngOnInit(): void {
+
+      this.service.getOnestudent(this.router.snapshot.params['id']).subscribe((res:any)=>{
+        console.log(res,'res==>');
+        this.studentForm.patchValue({
+          studentID:res.data[0].studentID,
+            studentName:res.data[0].studentName,
+            studentEmail:res.data[0].studentEmail,
+            studentPhone:res.data[0].studentPhone,
+            studentIntake:res.data[0].studentIntake
+
+        });
+      });
+  }
+//to update a student
+studentUpdate()
+{
+  console.log(this.studentForm.value);
+    this.service.updatestudent(this.router.snapshot.params['id'], this.studentForm.value).subscribe((result:any)=>{
+
+    this.studentForm.reset();
+    this.successmsg = 'Profile successfully updated';
+    this.message = true;
+
+    });
+  }
+removeMessage(){
+  this.message = false;
+}
+}
+
+16) Add routing into app-routing module for updatestudent
+17) Import code below into app.module.ts
+import { HttpClientModule } from '@angular/common/http';
+import {FormsModule,ReactiveFormsModule} from '@angular/forms';
+import { ApiserviceService } from './apiservice.service';
+
+18) Copy 2 files related to apiservice into app folder
+
+19) Run your frontend by typing this command
+ 
+ng serve --open
+
+20) Run your backend also 
+
+php -S localhost:8080 -t public public/index.php
